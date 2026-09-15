@@ -69,9 +69,9 @@
   .zone-q{position:sticky;top:0;z-index:4;height:100vh;min-height:620px;overflow:hidden;display:grid;place-items:center;padding:0 24px;
     background:linear-gradient(180deg,#8fb8cc 0%,#c9e4f5 38%,#f2e8dc 72%,#ffd98e 100%)}
   #qfx{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;z-index:1}
-  .zone-q .state{color:#3d3a44}
+  .zone-q .state{color:#fff}
   .zone-q .state .tags i{background:rgba(60,60,70,.62);color:#fff}
-  .zone-q .alt{color:rgba(60,60,70,.7)}
+  .zone-q .alt{color:rgba(255,255,255,.7)}
 
   /* ---------- 5. LOGIC ---------- */
   .logic{position:relative;z-index:5;background:var(--dark);color:#f2f3f5;font-size:14px}
@@ -167,15 +167,67 @@
   .ico.grid .g{stroke-dasharray:80;stroke-dashoffset:80;animation:icoDraw 3s ease-in-out infinite}
   @keyframes icoDraw{50%{stroke-dashoffset:0}100%{stroke-dashoffset:0}}
   /* 모션 데모 (05) */
-  .logic .demo.elastic i{animation:dElastic 1.6s cubic-bezier(.34,1.56,.64,1) infinite alternate}
-  @keyframes dElastic{from{transform:translateX(0)}to{transform:translateX(120px)}}
-  .logic .demo.gust i{border-radius:2px;animation:dGust 1.4s steps(3,end) infinite}
-  @keyframes dGust{0%{transform:translateX(0)}60%{transform:translateX(120px)}100%{transform:translateX(120px);opacity:0}}
-  .logic .demo.direct i{border-radius:7px 2px 2px 7px;width:26px;animation:dDirect 1.5s cubic-bezier(.7,0,.3,1) infinite}
-  .logic .demo.direct i::after{content:"";position:absolute;right:100%;top:5px;width:40px;height:4px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.5))}
-  @keyframes dDirect{0%{transform:translateX(0) scaleX(1)}30%{transform:translateX(20px) scaleX(.6)}100%{transform:translateX(130px) scaleX(1)}}
-  .logic .demo.control i{animation:dControl 3s cubic-bezier(.2,.8,.2,1) infinite alternate}
-  @keyframes dControl{from{transform:translateX(0)}to{transform:translateX(120px)}}
+  /* Model silhouettes share a quiet resting pose; movement retains each model's cadence. */
+  .logic .demo svg{display:block;width:100%;height:100%;overflow:visible;color:#fff}
+  .logic .demo .shape{fill:none;stroke:currentColor;stroke-width:3.4;stroke-linecap:butt;stroke-linejoin:miter}
+  .logic .demo .motion{transform-origin:180px 90px}
+  /* Animate SVG geometry, so all four models retain the same stroke weight. */
+  /* Q: fixed concentric center, 320 ms elastic release with one overshoot. */
+  .logic .demo.elastic circle{cx:180px;cy:90px;animation:qRecover 3.2s infinite;animation-delay:var(--delay,0s)}
+  @keyframes qRecover{
+    0%,16%,82%,100%{r:14px;animation-timing-function:cubic-bezier(.4,0,.6,1)}
+    20%{r:11px;animation-timing-function:cubic-bezier(.18,.8,.25,1)}
+    26%{r:calc(var(--radius) * 1.18);animation-timing-function:cubic-bezier(.4,0,.65,1)}
+    30%,60%{r:var(--radius);animation-timing-function:cubic-bezier(.45,0,.2,1)}
+  }
+  .logic .demo.gust .diamond{transform:rotate(45deg);transform-origin:180px 90px}
+  /* N: 300 ms snap / loaded hold / kick, with a crisp stop and patterned return. */
+  .logic .demo.gust rect{--rest:11px;--preload:9px;animation:nKick 2.6s infinite;animation-delay:var(--delay,0s)}
+  /* Keep the square outside every diamond throughout both directions. */
+  .logic .demo.gust .outer rect{--rest:46px;--preload:46px}
+  @keyframes nKick{
+    0%,16%,78%,100%{x:calc(180px - var(--rest));y:calc(90px - var(--rest));width:calc(var(--rest) * 2);height:calc(var(--rest) * 2);animation-timing-function:steps(1,end)}
+    20%{x:calc(180px - var(--preload));y:calc(90px - var(--preload));width:calc(var(--preload) * 2);height:calc(var(--preload) * 2);animation-timing-function:steps(1,end)}
+    23.5%,28%{x:calc(180px - max(var(--preload), var(--half) * .48));y:calc(90px - max(var(--preload), var(--half) * .48));width:calc(max(var(--preload) * 2, var(--half) * .96));height:calc(max(var(--preload) * 2, var(--half) * .96));animation-timing-function:cubic-bezier(.7,0,1,.4)}
+    31.538%,60%{x:calc(180px - var(--half));y:calc(90px - var(--half));width:calc(var(--half) * 2);height:calc(var(--half) * 2);animation-timing-function:cubic-bezier(.7,0,1,.4)}
+    64%,68%{x:calc(180px - max(var(--rest), var(--half) * .65));y:calc(90px - max(var(--rest), var(--half) * .65));width:calc(max(var(--rest) * 2, var(--half) * 1.3));height:calc(max(var(--rest) * 2, var(--half) * 1.3));animation-timing-function:cubic-bezier(.7,0,1,.4)}
+    71.538%{x:calc(180px - var(--rest));y:calc(90px - var(--rest));width:calc(var(--rest) * 2);height:calc(var(--rest) * 2)}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .logic .demo.elastic circle,.logic .demo.gust rect{animation:none!important}
+  }
+  /* Each wing translates independently, preserving its contour and a fixed center. */
+  .logic .demo .wing-left{--closed:64px;--compressed:72px;--near:14px;--far:28px}
+  .logic .demo .wing-right{--closed:-64px;--compressed:-72px;--near:-14px;--far:-28px}
+  .logic .demo.direct .motion{animation:mLaunch 3.2s infinite}
+  .logic .demo.direct .trail{opacity:0;animation:mTrail 3.2s infinite}
+  .logic .demo.direct .trail.far{animation-name:mTrailFar}
+  /* Gather inward, release outward in 160 ms, then hold before a soft return. */
+  @keyframes mLaunch{
+    0%,18%,86%,100%{transform:translateX(var(--closed));animation-timing-function:cubic-bezier(.4,0,.6,1)}
+    28%{transform:translateX(var(--compressed));animation-timing-function:cubic-bezier(.16,1,.3,1)}
+    33%,58%{transform:translateX(0);animation-timing-function:cubic-bezier(.45,0,.2,1)}
+  }
+  /* Echoes follow each wing from the center and dissolve at the destination. */
+  @keyframes mTrail{
+    0%,28%{opacity:0;transform:translateX(var(--compressed));animation-timing-function:cubic-bezier(.16,1,.3,1)}
+    33%{opacity:.18;transform:translateX(var(--near));animation-timing-function:ease-out}
+    44%,100%{opacity:0;transform:translateX(0)}
+  }
+  @keyframes mTrailFar{
+    0%,28%{opacity:0;transform:translateX(var(--compressed));animation-timing-function:cubic-bezier(.16,1,.3,1)}
+    33%{opacity:.07;transform:translateX(var(--far));animation-timing-function:ease-out}
+    46%,100%{opacity:0;transform:translateX(0)}
+  }
+  .logic .demo.control .motion{animation:eSettle 5.6s infinite}
+  /* Symmetric, monotonic expansion over 1.68 s; no overshoot or contour scaling. */
+  @keyframes eSettle{
+    0%,12%,88%,100%{transform:translateX(var(--closed));animation-timing-function:cubic-bezier(.22,1,.36,1)}
+    42%,60%{transform:translateX(0);animation-timing-function:cubic-bezier(.45,0,.2,1)}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .logic .demo .motion,.logic .demo .trail{animation:none!important}
+  }
   /* 다이어그램 */
   .logic .cols4{display:grid;grid-template-columns:repeat(4,1fr);gap:32px;text-align:center;align-items:start}
   .logic .cols4 .letter{font-family:var(--display);font-size:22px;margin:0 0 18px;padding-bottom:18px;border-bottom:1px solid #2a2e35}
@@ -216,7 +268,6 @@
   .logic .t-q{background:#3b5b6e}.logic .t-n{background:#26496b}.logic .t-m{background:#242f3d}.logic .t-e{background:#171a30}
   /* 16:9 모션 데모 박스 (제목 위) */
   .logic .demo{position:relative;aspect-ratio:16/9;height:auto;margin:0 0 20px;border:0;background:#101317;overflow:hidden}
-  .logic .demo i{position:absolute;top:calc(50% - 7px);left:calc(50% - 67px);width:14px;height:14px;border-radius:50%;background:#fff}
   /* 세로 모델 표 */
   .logic table.mt{width:100%;border-collapse:collapse;font-size:12.5px;text-align:center}
   .logic table.mt th,.logic table.mt td{padding:16px 14px;border-bottom:1px solid #23262c;vertical-align:top;color:#d7d9dd}
@@ -628,6 +679,17 @@
   .zone-q .qbg{position:absolute;inset:0;z-index:0;overflow:hidden}
   .zone-q .qbg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center bottom;display:block}
   #qfx{z-index:1}
+  .hold:has(> #q-breeze){height:270vh}
+  .zone-q .q-layers{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  @media(prefers-reduced-motion:reduce){.hold:has(> #q-breeze){height:190vh}}
+
+  /* Soft volumetric air recedes toward the city, without stroked geometry. */
+  .zone-n .nbg img{will-change:transform}
+  .city-wind{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden}
+  .city-wind canvas{display:block;width:100%;height:100%}
+  .hold:has(> #urban-wind){height:260vh}
+  @media(prefers-reduced-motion:reduce){.zone-n .nbg img{transform:none!important}}
+
 </style>
 
 <!-- 0. INTRO -->
@@ -673,8 +735,9 @@
 </section></div>
 
 <!-- 3. N -->
-<div class="hold"><section class="zone-n">
-  <div class="nbg"><img src="images/50_N_bg.webp" alt=""></div>
+<div class="hold"><section class="zone-n" id="urban-wind">
+  <div class="nbg"><img src="images/52_N_wind_city.jpg" alt=""></div>
+  <div class="city-wind" aria-hidden="true"><canvas id="city-air-depth"></canvas></div>
   <span class="alt">Altitude 2 · City</span>
   <div class="state">
     <span class="glyph">N</span>
@@ -685,8 +748,8 @@
 </section></div>
 
 <!-- 4. Q -->
-<div class="hold"><section class="zone-q">
-  <div class="qbg"><img src="images/51_Q_bg.webp" alt=""></div>
+<div class="hold"><section class="zone-q" id="q-breeze">
+  <div class="qbg"><img src="images/53_Q_playground_refined.png" alt=""></div>
   <canvas id="qfx"></canvas>
   <span class="alt">Altitude 1 · Ground</span>
   <div class="state">
@@ -716,11 +779,11 @@
   </div>
 
   <div class="block bleed">
-    <div class="grid2 full cards">
-      <div class="cell"><div class="demo elastic"><i></i></div><p class="g">Q</p><h4>Elastic</h4><p class="big">Bounce → recover</p><p>250–350 ms · 1 overshoot</p><div class="words"><i>emanate</i><i>swell</i><i>bounce</i><i>pull</i><i>hop-in</i><i>halt</i></div></div>
-      <div class="cell"><div class="demo gust"><i></i></div><p class="g">N</p><h4>Gust</h4><p class="big">Snap → kick</p><p>~300 ms · patterned</p><div class="words"><i>twitch</i><i>snap</i><i>kick</i><i>whip</i><i>cut-in</i><i>jolt</i></div></div>
-      <div class="cell"><div class="demo direct"><i></i></div><p class="g">M</p><h4>Directional</h4><p class="big">Compress → trail</p><p>120–180 ms · trail</p><div class="words"><i>flow</i><i>compress</i><i>trail</i><i>widen</i><i>glide-in</i><i>clamp</i></div></div>
-      <div class="cell"><div class="demo control"><i></i></div><p class="g">E</p><h4>Controlled</h4><p class="big">Displace → settle</p><p>500 ms+ · 0 overshoot</p><div class="words"><i>orbit</i><i>sway</i><i>settle</i><i>rise</i><i>fade-in</i><i>hold</i></div></div>
+    <div class="grid2 full cards" id="model-motion">
+      <div class="cell"><div class="demo elastic"><svg viewBox="0 0 360 180" aria-hidden="true"><g class="shape"><circle cx="180" cy="90" r="26" opacity=".36" style="--radius:26px;--delay:0s"/><circle cx="180" cy="90" r="42" opacity=".2" style="--radius:42px;--delay:.12s"/><circle cx="180" cy="90" r="60" style="--radius:60px;--delay:.24s"/></g></svg></div><p class="g">Q</p><h4>Elastic</h4><p class="big">Bounce → recover</p><p>250–350 ms · 1 overshoot</p><div class="words"><i>emanate</i><i>swell</i><i>bounce</i><i>pull</i><i>hop-in</i><i>halt</i></div></div>
+      <div class="cell"><div class="demo gust"><svg viewBox="0 0 360 180" aria-hidden="true"><g class="shape"><g class="diamond"><rect x="162" y="72" width="36" height="36" opacity=".36" style="--half:18px;--delay:0s"/></g><g class="diamond"><rect x="150" y="60" width="60" height="60" opacity=".2" style="--half:30px;--delay:.1s"/></g><g class="outer"><rect x="120" y="30" width="120" height="120" style="--half:60px;--delay:.2s"/></g></g></svg></div><p class="g">N</p><h4>Gust</h4><p class="big">Snap → kick</p><p>~300 ms · patterned</p><div class="words"><i>twitch</i><i>snap</i><i>kick</i><i>whip</i><i>cut-in</i><i>jolt</i></div></div>
+      <div class="cell"><div class="demo direct"><svg viewBox="0 0 360 180" aria-hidden="true"><g class="shape trail far wing-left"><path d="M64 35 L43 66 L43 114 L64 145"/></g><g class="shape trail far wing-right"><path d="M296 35 L317 66 L317 114 L296 145"/></g><g class="shape trail wing-left"><path d="M64 35 L43 66 L43 114 L64 145"/></g><g class="shape trail wing-right"><path d="M296 35 L317 66 L317 114 L296 145"/></g><g class="shape motion wing-left"><path d="M64 35 L43 66 L43 114 L64 145"/></g><g class="shape motion wing-right"><path d="M296 35 L317 66 L317 114 L296 145"/></g></svg></div><p class="g">M</p><h4>Directional</h4><p class="big">Compress → trail</p><p>120–180 ms · trail</p><div class="words"><i>flow</i><i>compress</i><i>trail</i><i>widen</i><i>glide-in</i><i>clamp</i></div></div>
+      <div class="cell"><div class="demo control"><svg viewBox="0 0 360 180" aria-hidden="true"><g class="shape motion wing-left"><path d="M79 35 C29 55 29 125 81 145"/></g><g class="shape motion wing-right"><path d="M281 35 C331 55 331 125 279 145"/></g></svg></div><p class="g">E</p><h4>Controlled</h4><p class="big">Displace → settle</p><p>500 ms+ · 0 overshoot</p><div class="words"><i>orbit</i><i>sway</i><i>settle</i><i>rise</i><i>fade-in</i><i>hold</i></div></div>
     </div>
   </div>
 
@@ -1173,6 +1236,115 @@
    4-B. Q — BREEZE : 먼지처럼 떠도는 미세 입자 (X-Particles 느낌)
         랜덤 군집(가우시안 클러스터 여러 개) + 아주 느린 드리프트 + 미세한 소용돌이
    ========================================================= */
+/* Q: separately composited scenery and articulated objects; qfx stays independent. */
+(function initPlaygroundLayers(){
+  const section=document.getElementById('q-breeze');if(!section)return;
+  const bg=section.querySelector('.qbg'),original=bg.querySelector('img');
+  const source=original.getAttribute('src'),plate='images/54_Q_motion_clean_plate.png';
+  const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+  const hold=section.parentElement;
+  const svgNS='http://www.w3.org/2000/svg';
+  const scene=document.createElementNS(svgNS,'svg');
+  scene.setAttribute('viewBox','0 0 1672 941');
+  scene.setAttribute('preserveAspectRatio','xMidYMax slice');
+  scene.setAttribute('aria-hidden','true');scene.classList.add('q-layers');
+  const picture=(href,extra='')=>`<image href="${href}" width="1672" height="941" ${extra}/>`;
+  scene.innerHTML=`<defs>
+    <linearGradient id="q-town-fade" x2="0" y2="1"><stop offset="0" stop-color="black"/><stop offset=".13" stop-color="black"/><stop offset=".205" stop-color="white"/></linearGradient>
+    <mask id="q-town-mask"> <rect width="1672" height="941" fill="url(#q-town-fade)"/></mask>
+    <linearGradient id="q-ground-fade" x2="0" y2="1"><stop offset=".61" stop-color="black"/><stop offset=".69" stop-color="white"/></linearGradient>
+    <mask id="q-ground-mask"><rect width="1672" height="941" fill="url(#q-ground-fade)"/></mask>
+    <filter id="q-patch-soft" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="2"/></filter>
+    <mask id="q-erase"><g fill="white" filter="url(#q-patch-soft)"><rect x="785" y="503" width="97" height="43"/><rect x="296" y="454" width="82" height="113"/><rect x="1193" y="589" width="220" height="60"/></g></mask>
+    <clipPath id="q-road-occlusion"><path d="M994 552 L1097 523 Q1102 522 1101 527 L1099 530 L999 558 Q992 559 994 552Z M1015 549 L1011 541 Q1010 538 1013 539 Q1017 542 1019 548Z M1087 528 L1082 516 Q1081 513 1084 514 L1090 526Z M1038 559 L1044 544 Q1047 538 1053 537 Q1058 537 1061 544 L1070 560Z M1190 457 L1204 455 L1207 560 L1190 560Z M1213 461 L1227 461 L1229 562 L1213 562Z M1233 464 L1246 465 L1276 563 L1260 563 L1235 501Z M1189 485 Q1160 484 1142 511 Q1120 542 1099 544 Q1087 548 1094 557 L1111 559 Q1141 555 1168 520 L1196 491Z M1319 450 L1327 449 L1330 580 L1317 580Z M1372 450 L1381 450 L1382 582 L1372 582Z M1428 447 L1438 447 L1439 591 L1428 591Z M1495 445 L1506 445 L1508 593 L1496 593Z"/></clipPath>
+    <clipPath id="q-car-cut"><path d="M790 528 Q791 522 802 521 L809 513 Q813 509 820 509 L835 510 Q844 511 850 520 L866 522 Q875 524 875 533 L872 539 L867 540 Q864 547 857 543 L853 540 L815 540 Q809 548 800 543 L797 540 L791 536Z"/></clipPath>
+    <clipPath id="q-beam-cut"><path d="M1199 623 L1227 618 L1221 608 Q1220 604 1225 604 L1239 617 L1299 610 L1339 607 L1335 601 Q1331 596 1337 595 L1352 607 L1378 608 Q1395 608 1404 617 Q1409 626 1400 628 L1381 620 L1310 624 L1213 635 Q1198 636 1199 623Z"/></clipPath>
+    <clipPath id="q-pivot-cut"><path d="M1284 640 L1302 612 Q1316 599 1325 611 L1341 646 L1302 646Z"/></clipPath>
+    <clipPath id="q-swing-a-cut"><path d="M300 548 L316 545 L327 549 L329 555 L300 561 L297 557Z"/></clipPath>
+    <clipPath id="q-swing-b-cut"><path d="M342 548 L361 547 L371 551 L370 555 L341 560 L337 555Z"/></clipPath>
+    <clipPath id="q-swing-frame"><path d="M289 451 L299 452 L258 581 L247 582Z M301 451 L310 450 L333 583 L321 583Z M382 458 L390 458 L430 567 L423 568Z M376 461 L382 462 L363 568 L356 568Z"/></clipPath>
+    <linearGradient id="q-rope-color"><stop stop-color="#c5b3a3"/><stop offset=".5" stop-color="#f7e4ce"/><stop offset="1" stop-color="#cab6a3"/></linearGradient>
+  </defs>
+  <g data-plane="sky">${picture(source)}</g>
+  <g data-plane="town">
+    <g mask="url(#q-town-mask)">${picture(source)}${picture(plate,'mask="url(#q-erase)"')}</g>
+    <g data-object="car"><ellipse cx="833" cy="542" rx="40" ry="2.5" fill="#555267" opacity=".16"/>${picture(source,'clip-path="url(#q-car-cut)"')}</g>
+    ${picture(source,'clip-path="url(#q-road-occlusion)"')}
+    <g fill="none" stroke="url(#q-rope-color)" stroke-width="1.7" stroke-linecap="round">
+      <path data-rope="a-left"/><path data-rope="a-right"/>
+      <path data-rope="b-left"/><path data-rope="b-right"/>
+    </g>
+    <g data-object="swing-a">${picture(source,'clip-path="url(#q-swing-a-cut)"')}</g>
+    <g data-object="swing-b">${picture(source,'clip-path="url(#q-swing-b-cut)"')}</g>
+    ${picture(plate,'clip-path="url(#q-swing-frame)"')}
+  </g>
+  <g data-plane="ground">
+    <g mask="url(#q-ground-mask)">${picture(source)}${picture(plate,'mask="url(#q-erase)"')}</g>
+    <g data-object="seesaw">${picture(source,'clip-path="url(#q-beam-cut)"')}</g>
+    ${picture(source,'clip-path="url(#q-pivot-cut)"')}
+  </g>`;
+  let ready=false,active=false,visible=false,frame=0,last=0,time=0,progress=0,target=0,energy=0;
+  const sky=scene.querySelector('[data-plane="sky"]'),town=scene.querySelector('[data-plane="town"]');
+  const ground=scene.querySelector('[data-plane="ground"]');
+  const car=scene.querySelector('[data-object="car"]'),swingA=scene.querySelector('[data-object="swing-a"]');
+  const swingB=scene.querySelector('[data-object="swing-b"]'),seesaw=scene.querySelector('[data-object="seesaw"]');
+  const clamp=v=>Math.min(1,Math.max(0,v));
+  const plane=(el,s,y=0)=>el.setAttribute('transform',`translate(836 ${560+y}) scale(${s}) translate(-836 -560)`);
+  function draw(){
+    if(!ready)return;
+    const p=reduced.matches?0:progress;
+    plane(sky,1+p*.018);
+    plane(town,1+p*.085,-p*3);
+    plane(ground,1+p*.15,-p*3);
+    if(reduced.matches){scene.style.display='none';original.style.visibility='visible';return}
+    scene.style.display='block';original.style.visibility='hidden';
+    const breeze=active?Math.min(time/2,1):0;
+    // Suspend each seat from two fixed attachments; only the seat moves.
+    function swing(seat,key,phase,amplitude,anchors,ends){
+      const angle=Math.sin(phase)*amplitude*breeze;
+      const dx=Math.sin(angle)*96,dy=(1-Math.cos(angle))*-96;
+      seat.setAttribute('transform',`translate(${dx} ${dy})`);
+      ['left','right'].forEach((side,i)=>{
+        scene.querySelector(`[data-rope="${key}-${side}"]`).setAttribute('d',
+          `M${anchors[i][0]} ${anchors[i][1]} L${ends[i][0]+dx} ${ends[i][1]+dy}`);
+      });
+    }
+    swing(swingA,'a',time*1.45,.055,[[320,453],[344,455]],[[303,550],[325,550]]);
+    swing(swingB,'b',time*1.22+.7,.045,[[348,455],[375,456]],[[341,551],[367,551]]);
+    seesaw.setAttribute('transform',`rotate(${Math.sin(time*.95)*3.2*breeze} 1316 617)`);
+    // Stay on the rear roadway and park in front of the coral shop, once.
+    const journey=clamp(time/16);
+    const travel=journey*journey*(3-2*journey);
+    car.setAttribute('transform',`translate(${travel*250} ${-travel*5})`);
+    car.style.opacity='1';
+  }
+  function loop(now){
+    frame=0;if(!visible||document.hidden||reduced.matches||!ready){last=0;return}
+    const dt=last?Math.min(.05,(now-last)/1000):1/60;last=now;
+    const delta=target-progress;progress+=delta*(1-Math.exp(-dt*7));
+    energy+=(Math.min(1,Math.abs(delta)*7)-energy)*(1-Math.exp(-dt*4));
+    if(active)time+=dt*(1+energy*.25);
+    draw();if(active||Math.abs(target-progress)>.0001)frame=requestAnimationFrame(loop);
+  }
+  function update(){
+    const r=hold.getBoundingClientRect();visible=r.top<innerHeight&&r.bottom>0;
+    target=clamp(-r.top/Math.max(1,hold.offsetHeight-section.offsetHeight));
+    if(!visible||document.hidden||reduced.matches){cancelAnimationFrame(frame);frame=0;last=0;progress=target;draw()}
+    else if(ready&&!frame)frame=requestAnimationFrame(loop);
+  }
+  function start(){if(visible&&!reduced.matches){active=true;update()}}
+  addEventListener('wheel',start,{passive:true});
+  addEventListener('touchmove',start,{passive:true});
+  addEventListener('keydown',e=>{if(['ArrowDown','PageDown','Space',' '].includes(e.key))start()});
+  addEventListener('scroll',()=>{update();if(visible&&target>.002)start()},{passive:true});
+  addEventListener('resize',update);document.addEventListener('visibilitychange',update);
+  reduced.addEventListener('change',update);
+  // Keep the existing image and particles as a fallback if an asset cannot load.
+  const clean=new Image();clean.src=plate;
+  clean.decode().then(()=>{bg.append(scene);ready=true;update();draw()}).catch(()=>{});
+  update();
+})();
+
 (function initDust(){
   const canvas = document.getElementById('qfx'); if (!canvas) return;
   const section = canvas.parentElement, ctx = canvas.getContext('2d');
@@ -1561,5 +1733,116 @@ initMood(document.getElementById('mood')); initMood(document.getElementById('mot
 
 (function(){ const root=document.getElementById('motion'); if(!root) return;
   new IntersectionObserver(es=>es.forEach(en=>{ if(!en.isIntersecting) root.querySelectorAll('video').forEach(v=>v.pause()); else root.querySelectorAll('.mset.on video').forEach(v=>v.play().catch(()=>{})); }),{threshold:0}).observe(root); })();
+</script>
+<script>
+
+(function initCityWind(){
+  const section=document.getElementById('urban-wind');
+  const canvas=document.getElementById('city-air-depth');
+  if(!section || !canvas)return;
+  const ctx=canvas.getContext('2d'), hold=section.parentElement;
+  const bg=section.querySelector('.nbg img');
+  const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+  const clamp=v=>Math.max(0,Math.min(1,v));
+  const ease=v=>{v=clamp(v);return v*v*(3-2*v)};
+  // Pre-render soft, irregular volumes once; no per-frame blur or line drawing.
+  const sprites=Array.from({length:4},(_,k)=>{
+    const c=document.createElement('canvas');c.width=384;c.height=256;
+    const g=c.getContext('2d');
+    for(let j=0;j<9;j++){
+      const x=92+j*23,y=128+Math.sin(j*1.7+k)*27,r=52+(j%3)*13;
+      const gradient=g.createRadialGradient(x,y,0,x,y,r);
+      gradient.addColorStop(0,k===3?'rgba(120,160,184,.13)':'rgba(248,253,255,.42)');
+      gradient.addColorStop(.42,k===3?'rgba(145,180,200,.07)':'rgba(240,250,255,.2)');
+      gradient.addColorStop(1,'rgba(240,250,255,0)');
+      g.fillStyle=gradient;g.fillRect(x-r,y-r,r*2,r*2);
+    }
+    return c;
+  });
+  const volumes=Array.from({length:28},(_,i)=>({
+    phase:(i*.61803398875)%1,side:i%2?1:-1,
+    x:.33+((i*17)%13)/19,y:(((i*7)%17)/16-.48)*1.15,
+    size:.36+((i*11)%9)*.025,speed:.06+(i%3)*.014,layer:i%3,sprite:i%4
+  }));
+  let W=0,H=0,frame=0,visible=false,last=0,time=0,progress=0,targetProgress=0,scrollEnergy=0,exit=1;
+  function resize(){
+    W=section.clientWidth;H=section.clientHeight;
+    const dpr=Math.min(devicePixelRatio||1,1.5);
+    canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);update();
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    // Match the protected tower corridor to object-fit:cover and the camera transform.
+    const camera=reduced.matches?0:progress;
+    const zoom=reduced.matches?1:1.035+camera*.11;
+    bg.style.transform=reduced.matches?'none':`scale(${zoom}) translate3d(${-camera*.7}%,${-camera*2.2}%,0)`;
+    const imageWidth=bg.naturalWidth||2752,imageHeight=bg.naturalHeight||1536;
+    const cover=Math.max(W/imageWidth,H/imageHeight);
+    const projectX=x=>W/2+(x*imageWidth*cover-imageWidth*cover/2)*zoom-camera*.007*W*zoom;
+    const towerLeft=projectX(.433),towerRight=projectX(.565);
+    // Two restrained gusts pass beside the tower as scrolling advances.
+    for(let bank=0;bank<2;bank++){
+      const u=clamp((progress-(.12+bank*.36))/.3);
+      if(u<=0 || u>=1)continue;
+      const depth=1/(.9+u*3.6),side=bank?1:-1;
+      const target=side<0?towerLeft-W*.065:towerRight+W*.065;
+      const x=target+side*W*.48*depth,y=H*.64+H*.18*depth;
+      const width=W*.48*depth,height=H*.25*depth;
+      ctx.globalAlpha=Math.sin(u*Math.PI)*exit*(reduced.matches?.08:.42);
+      ctx.drawImage(sprites[bank],x-width/2,y-height/2,width,height);
+    }
+    ctx.globalAlpha=1;
+    // Perspective projection: near volumes are large and fast; far air contracts and dissolves.
+    const particles=volumes.map(v=>({...v,u:(v.phase+time*v.speed+progress*1.45)%1})).sort((a,b)=>b.u-a.u);
+    for(const v of particles){
+      const z=.52+v.u*5.8, perspective=1/z;
+      const reveal=reduced.matches?.3:ease((progress-[.03,.19,.35][v.layer])/.32);
+      const alpha=ease(v.u/.1)*(1-ease((v.u-.65)/.35))*reveal*exit;
+      const target=v.side<0?towerLeft-W*.06:towerRight+W*.06;
+      const x=target+(v.side*v.x*W+Math.sin(time*.22+v.phase*9)*W*.015)*perspective;
+      const y=H*.62+(v.y*H*.7+Math.cos(time*.18+v.phase*7)*H*.018)*perspective;
+      const size=Math.min(W,H)*v.size*perspective;
+      ctx.save();ctx.translate(x,y);
+      ctx.rotate(Math.atan2(y-H*.62,x-target));
+      ctx.globalAlpha=alpha*(v.sprite===3?.25:.57);
+      ctx.drawImage(sprites[v.sprite],-size*1.2,-size*.25,size*2.4,size*.5);
+      ctx.restore();
+    }
+      // Clear all air over the tower, with a soft edge outside its silhouette.
+    const feather=Math.max(18,W*.025),left=towerLeft-5,right=towerRight+5;
+    const mask=ctx.createLinearGradient(left-feather,0,right+feather,0);
+    const span=right-left+feather*2;
+    mask.addColorStop(0,'rgba(0,0,0,0)');
+    mask.addColorStop(feather/span,'rgba(0,0,0,1)');
+    mask.addColorStop(1-feather/span,'rgba(0,0,0,1)');
+    mask.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.save();ctx.globalAlpha=1;ctx.globalCompositeOperation='destination-out';
+    ctx.fillStyle=mask;ctx.fillRect(left-feather,0,span,H);ctx.restore();
+  }
+  function loop(now){
+    frame=0;if(!visible || document.hidden || reduced.matches){last=0;return}
+    const dt=last?Math.min((now-last)/1000,.05):1/60;last=now;
+    const delta=targetProgress-progress;
+    progress+=delta*(1-Math.exp(-dt*10));
+    scrollEnergy+=(Math.min(Math.abs(delta)*9,1)-scrollEnergy)*(1-Math.exp(-dt*6));
+    time+=dt*(1+scrollEnergy*1.6);
+    draw();frame=requestAnimationFrame(loop);
+  }
+  function update(){
+    const r=hold.getBoundingClientRect(),vh=innerHeight;
+    visible=r.top<vh && r.bottom>0;
+    targetProgress=clamp((vh*.7-r.top)/Math.max(1,r.height-vh*.3));
+    if(!visible || reduced.matches)progress=targetProgress;
+    exit=1-ease((vh*.45-r.bottom)/(vh*.45));
+    if(!visible || document.hidden || reduced.matches){cancelAnimationFrame(frame);frame=0;last=0;draw()}
+    else if(!frame)frame=requestAnimationFrame(loop);
+  }
+  addEventListener('scroll',update,{passive:true});
+  addEventListener('resize',resize);
+  document.addEventListener('visibilitychange',update);
+  reduced.addEventListener('change',update);
+  resize();
+})();
 </script>
 </html>
